@@ -218,3 +218,35 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# =====================================
+# Chest X-ray Project
+# =====================================
+
+# Dataset
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Model checkpoints
+*.pth
+*.pt
+*.ckpt
+
+# Local model outputs
+outputs/models/*
+!outputs/models/.gitkeep
+
+# Environment variables
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
