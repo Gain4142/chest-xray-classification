@@ -1,0 +1,17 @@
+{
+  "notebooks": {
+    "01_EDA.ipynb": {
+      "executed_code_cells": 9,
+      "error_outputs": 0
+    },
+    "02_Preprocessing.ipynb": {
+      "executed_code_cells": 5,
+      "error_outputs": 0
+    }
+  },
+  "readme_local_links_exist": true,
+  "metadata_rerun_preserved_cumulative_qc_document": true,
+  "active_manifests_reproduction_matches_existing": true,
+  "full_training_started": false,
+  "github_push_performed": false
+}

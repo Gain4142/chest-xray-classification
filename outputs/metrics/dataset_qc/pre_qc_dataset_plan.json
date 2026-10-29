@@ -1,0 +1,16 @@
+{
+  "seed": 42,
+  "training": "All positive train images plus 3x random negative images",
+  "evaluation": "Original full validation/test cohorts, before pixel deduplication",
+  "manifest_directory": "data\\processed\\reduced_train_full_eval",
+  "counts": {
+    "train": 4076,
+    "val": 16875,
+    "test": 16728
+  },
+  "parent_sha256": {
+    "train": "69bd245e036d425e4e6cebb6e5ccc2d6a9a66044e7b67b9f903b6a4baec9f4c0",
+    "val": "41afc89e94aeb51027523d9caaa45a8f9685bb4d9ed23a1c4dcdd1b88aaa130b",
+    "test": "c34fcd2a64a0122ece277b730fcfaae7480cc49b9665a73e8fe5074b05ee4afd"
+  }
+}

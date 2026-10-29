@@ -1,0 +1,13 @@
+{
+  "expected_images": 37679,
+  "verified_images": 37679,
+  "missing_images": 0,
+  "file_hash_duplicate_groups": 0,
+  "pixel_duplicate_groups": 6,
+  "cross_split_pixel_duplicate_groups": 1,
+  "minimum_width": 1024,
+  "minimum_height": 1024,
+  "original_png_bytes": 15130253194,
+  "status": "review_duplicates_before_training",
+  "scope": "Coverage, decoding, size, file hashes and exact pixel duplicates; near-duplicates and visual quality are not covered."
+}

@@ -1,0 +1,7 @@
+Image Index,Patient ID,Finding Labels,pneumonia,split,pixel_sha256,retained_image,reason
+00007670_031.png,7670,Effusion|Infiltration|Pneumothorax,0,test,a83d1f03291d69afa5dc903f75fe1285aae32dbdf13bf814d69596da8c73b81c,00007670_030.png,"Exact decoded-pixel duplicate; prefer test > val > train, then filename order"
+00016518_002.png,16518,No Finding,0,test,880c1c8273ddc452e5577e313c04ae69b20ece9b8a8c147253d0028b5004188c,00016518_001.png,"Exact decoded-pixel duplicate; prefer test > val > train, then filename order"
+00016568_053.png,16568,Edema|Nodule,0,test,5cac075668d473e11eca8ca086784264aec9c85a66e9b76573ecbb6904f036d2,00016568_052.png,"Exact decoded-pixel duplicate; prefer test > val > train, then filename order"
+00005403_024.png,5403,Infiltration,0,val,f7365d9efa421bf6fe890d9c8c2b97ee85aa9730e98c205395b03624373584fe,00005537_011.png,"Exact decoded-pixel duplicate; prefer test > val > train, then filename order"
+00007633_004.png,7633,Infiltration,0,val,53772d9ca73598a4cf7e1a76e83ebf756c957339575bfc3f52ac426d281da257,00007633_003.png,"Exact decoded-pixel duplicate; prefer test > val > train, then filename order"
+00015262_003.png,15262,Atelectasis,0,val,93ee80103960b5cd3584f10befc491e4c444029048318ffbac3f8c89c7d62da0,00015262_001.png,"Exact decoded-pixel duplicate; prefer test > val > train, then filename order"

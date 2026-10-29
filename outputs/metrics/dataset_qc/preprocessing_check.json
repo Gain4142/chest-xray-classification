@@ -1,0 +1,17 @@
+{
+  "training_images": 4076,
+  "sampled_images": 12,
+  "batch_shape": [
+    8,
+    3,
+    224,
+    224
+  ],
+  "target_shape": [
+    8
+  ],
+  "finite_values": true,
+  "transform": "RGB -> 224x224 bilinear -> float tensor -> ImageNet normalization",
+  "augmentation": "none for baseline",
+  "scope": "Train-only visual samples and loader smoke check; not full visual/clinical validation."
+}

@@ -1,0 +1,4 @@
+split,patients,images,positive_images,excluded_duplicate_images
+train,2858,4076,1019,0
+val,4621,16872,218,3
+test,4621,16725,194,3

@@ -1,0 +1,11 @@
+{
+  "active_manifest_directory": "data/processed/reduced_train_full_eval_qc",
+  "input_images": 37679,
+  "retained_images": 37673,
+  "excluded_images": 6,
+  "rule": "Exact pixel deduplication; prefer test > val > train then filename order; applied before model training/evaluation",
+  "raw_files_deleted": false,
+  "remaining_exact_pixel_duplicates": 0,
+  "patient_overlap_all_pairs": 0,
+  "near_duplicate_and_visual_review": "pending"
+}

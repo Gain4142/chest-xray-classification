@@ -1,0 +1,8 @@
+{
+  "patients_with_pneumonia_label": 1008,
+  "patients_with_multiple_images": 13302,
+  "median_images_per_patient": 1.0,
+  "max_images_per_patient": 184,
+  "pneumonia_only_images": 322,
+  "pneumonia_with_other_findings": 1109
+}

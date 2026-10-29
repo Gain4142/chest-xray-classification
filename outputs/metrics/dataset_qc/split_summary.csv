@@ -1,0 +1,4 @@
+split,patients,patients_with_pneumonia_label,images,positive_images,positive_image_percent
+train,21563,706,78517,1019,1.2978
+val,4621,151,16875,218,1.2919
+test,4621,151,16728,194,1.1597

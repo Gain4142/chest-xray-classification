@@ -1,0 +1,6 @@
+{
+  "temporary_test_fraction": 0.2,
+  "overlapping_patients": 8028,
+  "test_images_from_seen_patients_percent": 82.6881912236889,
+  "used_for_training": false
+}

@@ -1,0 +1,63 @@
+{
+  "training_samples": [
+    "00014234_000.png",
+    "00013249_034.png",
+    "00003083_001.png",
+    "00000917_000.png"
+  ],
+  "samples": 4,
+  "repeated_variants_per_image": 8,
+  "visualization_seeds": [
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49
+  ],
+  "clahe_enabled": false,
+  "rotation": {
+    "probability": 0.5,
+    "degrees": [
+      -5,
+      5
+    ],
+    "expand": false,
+    "fill": 0
+  },
+  "brightness_contrast": {
+    "probability": 0.5,
+    "brightness_factor": [
+      0.9,
+      1.1
+    ],
+    "contrast_factor": [
+      0.9,
+      1.1
+    ]
+  },
+  "checks": {
+    "sample_membership_in_training": true,
+    "original_files_unchanged": true,
+    "evaluation_deterministic": true,
+    "evaluation_matches_previous_baseline": true,
+    "augmentation_off_matches_evaluation": true,
+    "seed_reproducible": true,
+    "training_output_varies": true,
+    "finite_3x224x224_output": true,
+    "actual_loader_labels_match_manifest": true
+  },
+  "actual_batch_shape": [
+    4,
+    3,
+    224,
+    224
+  ],
+  "normalized_batch_mean": 0.40861696004867554,
+  "normalized_batch_std": 1.2713019847869873,
+  "default_benchmark_training_changed": false,
+  "full_model_training_started": false,
+  "limitations": "Four convenience samples, not clinical validation. Rotation can add black corners and remove small edge regions. Generalization improvement is not established."
+}

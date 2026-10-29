@@ -1,0 +1,67 @@
+{
+  "sample_images": 4,
+  "sample_source": "Existing fixed train-only visual QC list, rows 0/1/6/10",
+  "clahe": {
+    "implementation": "OpenCV",
+    "version": "4.13.0",
+    "clip_limit": 2.0,
+    "tile_grid_size": [
+      8,
+      8
+    ],
+    "order": "8-bit grayscale at original resolution -> CLAHE -> RGB -> 224x224 bilinear -> tensor -> ImageNet normalization"
+  },
+  "baseline_default": "resize_only; unchanged",
+  "checks": {
+    "training_membership": true,
+    "finite_3x224x224_tensors": true,
+    "repeat_evaluation_deterministic": true,
+    "source_file_hashes_unchanged": true
+  },
+  "normalized_batch_statistics": [
+    {
+      "variant": "resize_only",
+      "batch_shape": [
+        4,
+        3,
+        224,
+        224
+      ],
+      "normalized_batch_mean": 0.36550605297088623,
+      "normalized_batch_std": 1.2672311067581177,
+      "channel_means": [
+        0.20260605216026306,
+        0.3365928828716278,
+        0.5573192238807678
+      ],
+      "channel_stds": [
+        1.2421045303344727,
+        1.2698301076889038,
+        1.2641865015029907
+      ]
+    },
+    {
+      "variant": "clahe_then_resize",
+      "batch_shape": [
+        4,
+        3,
+        224,
+        224
+      ],
+      "normalized_batch_mean": 0.3582049012184143,
+      "normalized_batch_std": 1.2312244176864624,
+      "channel_means": [
+        0.19540119171142578,
+        0.32922717928886414,
+        0.5499862432479858
+      ],
+      "channel_stds": [
+        1.2063336372375488,
+        1.2332607507705688,
+        1.2277796268463135
+      ]
+    }
+  ],
+  "quality_or_model_improvement_established": false,
+  "limitations": "Four convenience samples; intensity statistics are descriptive and do not measure diagnostic information or classification performance."
+}

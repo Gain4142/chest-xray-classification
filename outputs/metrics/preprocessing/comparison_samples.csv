@@ -1,0 +1,5 @@
+Image Index,Finding Labels,Patient ID,pneumonia,image,mode
+00014234_000.png,Pneumonia,14234,1,00014234_000.png,L
+00013249_034.png,Cardiomegaly|Edema|Infiltration|Pneumonia,13249,1,00013249_034.png,L
+00003083_001.png,Effusion,3083,0,00003083_001.png,L
+00000917_000.png,No Finding,917,0,00000917_000.png,RGBA

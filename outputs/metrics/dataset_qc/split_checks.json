@@ -1,0 +1,15 @@
+{
+  "method": "custom patient-level 70/15/15 split; not NIH official split",
+  "seed": 42,
+  "stratification": "Patient has at least one Pneumonia-labeled image",
+  "source_sha256": "88f75094e25ccc0c6f1f9cdfd4b2f94f9379a0ae07d5ff4dcf94242707b07462",
+  "patient_overlap": {
+    "train_val": 0,
+    "train_test": 0,
+    "val_test": 0
+  },
+  "all_metadata_rows_assigned_once": true,
+  "both_image_classes_in_each_split": true,
+  "image_files_checked": false,
+  "note": "Do not rerun or rebalance held-out cohorts based on model results. Image duplicate checks remain pending."
+}

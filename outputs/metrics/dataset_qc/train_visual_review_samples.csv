@@ -1,0 +1,13 @@
+Image Index,Finding Labels,Patient ID,pneumonia,image,mode
+00014234_000.png,Pneumonia,14234,1,00014234_000.png,L
+00013249_034.png,Cardiomegaly|Edema|Infiltration|Pneumonia,13249,1,00013249_034.png,L
+00012942_008.png,Infiltration|Pneumonia,12942,1,00012942_008.png,L
+00000915_005.png,Infiltration|Pneumonia,915,1,00000915_005.png,L
+00016231_003.png,Atelectasis|Consolidation|Pneumonia,16231,1,00016231_003.png,L
+00015732_047.png,Edema|Infiltration|Pneumonia,15732,1,00015732_047.png,L
+00003083_001.png,Effusion,3083,0,00003083_001.png,L
+00027358_004.png,No Finding,27358,0,00027358_004.png,L
+00001549_006.png,No Finding,1549,0,00001549_006.png,L
+00005528_016.png,No Finding,5528,0,00005528_016.png,L
+00000917_000.png,No Finding,917,0,00000917_000.png,RGBA
+00019576_063.png,Infiltration,19576,0,00019576_063.png,RGBA

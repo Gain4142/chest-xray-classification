@@ -1,0 +1,15 @@
+{
+  "metadata_images": 112120,
+  "patients": 30805,
+  "positive_images": 1431,
+  "positive_percent": 1.2763110952550838,
+  "always_negative_accuracy": 0.9872368890474491,
+  "ap_positive_percent": 1.787547422450346,
+  "pa_positive_percent": 0.9359679096716684,
+  "bad_split_overlapping_patients": 8028,
+  "active_images": 37673,
+  "active_missing_files": 0,
+  "active_exact_pixel_duplicates": 0,
+  "source_csv_unchanged": true,
+  "new_split_created": false
+}

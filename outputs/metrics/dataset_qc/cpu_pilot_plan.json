@@ -1,0 +1,23 @@
+{
+  "seed": 42,
+  "purpose": "Initial CPU feasibility experiment, not final benchmark",
+  "training": "All train positive images; random 3:1 negative-to-positive image sample",
+  "validation_and_test": "1000 patients each, stratified by any Pneumonia label; all images for selected patients; no image class balancing",
+  "patient_overlaps": {
+    "train_val": 0,
+    "train_test": 0,
+    "val_test": 0
+  },
+  "parent_manifest_sha256": {
+    "train": "69bd245e036d425e4e6cebb6e5ccc2d6a9a66044e7b67b9f903b6a4baec9f4c0",
+    "val": "41afc89e94aeb51027523d9caaa45a8f9685bb4d9ed23a1c4dcdd1b88aaa130b",
+    "test": "c34fcd2a64a0122ece277b730fcfaae7480cc49b9665a73e8fe5074b05ee4afd"
+  },
+  "limitations": [
+    "Training prevalence is deliberately changed; raw probabilities are not population risks.",
+    "Patient stratification does not guarantee equal image prevalence.",
+    "Small held-out positive counts give uncertain sensitivity and AUPRC estimates.",
+    "Do not select a different seed/cohort after inspecting model performance.",
+    "No model evaluation or full pilot image acquisition has occurred."
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "source_file": "Data_Entry_2017.csv",
+  "source_sha256": "88f75094e25ccc0c6f1f9cdfd4b2f94f9379a0ae07d5ff4dcf94242707b07462",
+  "metadata_rows": 112120,
+  "unique_image_names": 112120,
+  "unique_patients": 30805,
+  "pneumonia_label_positive": 1431,
+  "pneumonia_label_negative": 110689,
+  "positive_percent": 1.2763,
+  "missing_required_values": {
+    "Image Index": 0,
+    "Finding Labels": 0,
+    "Patient ID": 0
+  },
+  "duplicate_image_name_rows": 0,
+  "duplicate_full_rows_beyond_first": 0,
+  "image_name_rows_with_conflicting_labels": 0,
+  "scope": "Metadata only; image files have not been inspected.",
+  "target_definition": "1 = Pneumonia label present; 0 = label absent, not necessarily normal.",
+  "split_requirement": "Split by Patient ID; no dataset split has been created."
+}

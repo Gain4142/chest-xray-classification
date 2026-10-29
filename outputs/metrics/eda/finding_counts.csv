@@ -1,0 +1,16 @@
+finding,images
+Hernia,227
+Pneumonia,1431
+Fibrosis,1686
+Edema,2303
+Emphysema,2516
+Cardiomegaly,2776
+Pleural_Thickening,3385
+Consolidation,4667
+Pneumothorax,5302
+Mass,5782
+Nodule,6331
+Atelectasis,11559
+Effusion,13317
+Infiltration,19894
+No Finding,60361
