@@ -2,16 +2,16 @@
 import argparse
 import csv
 import hashlib
-import json
 import shutil
 import zipfile
 from pathlib import Path
+from src.experiment_config import load_config
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def prepare(config_path, archive=None):
-    config = json.loads(Path(config_path).read_text(encoding='utf-8'))
+    config = load_config(config_path, root=ROOT)
     tables = {}
     for split in ('train', 'val'):
         spec = config['data'][split]
@@ -55,7 +55,7 @@ def prepare(config_path, archive=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--config', type=Path, default=ROOT / 'experiments/baseline_comparison.json')
+    parser.add_argument('--config', type=Path, default=ROOT / 'params.yaml')
     parser.add_argument('--archive', type=Path)
     args = parser.parse_args()
     prepare(args.config, args.archive)

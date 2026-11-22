@@ -50,7 +50,7 @@ GPU 설치 조합: [PyTorch 공식 설치 명령](https://pytorch.org/get-starte
 
 노트북은 저장소의 `src`와 `scripts`를 직접 실행한다. 코드 사본을 노트북 안에 넣지 않으므로 다음 Git 갱신이 그대로 반영된다. 첫 모델 다운로드에는 인터넷이 필요하다. 실행 중에는 GPU 컴퓨터를 절전하거나 종료하지 않는다.
 
-현재 설정은 `experiments/baseline_comparison.json`이다.
+현재 설정은 저장소 최상위의 **`params.yaml`**이다. Jupyter에 하이퍼파라미터를 따로 적지 않는다. 고정된 데이터 분할 정보는 `experiments/data_split.json`에 분리돼 있다.
 
 | 항목 | 설정 |
 |---|---|
@@ -82,12 +82,13 @@ GPU 설치 조합: [PyTorch 공식 설치 명령](https://pytorch.org/get-starte
 
 같은 명령을 다시 실행하면 완료된 모델은 재사용하고, 중단된 모델은 마지막 완료 에포크의 `last.pt`에서 이어간다. 가중치·optimizer·난수·배치 순서 상태를 복원한다. 첫 에포크 저장 이전에 끊기면 체크포인트가 없으므로, 해당 불완전 실행 폴더를 다른 이름으로 보관한 뒤 다시 실행한다.
 
-결과는 `outputs/models/baseline_frozen_8ep_ap_v1/`에 저장된다.
+기본 결과는 `outputs/models/baseline_frozen_8ep_ap_v2/`에 저장된다. 실제 위치는 `params.yaml`의 `output_root`와 `experiment_id`를 따른다.
 
 - 모델별 `best.pt`, `last.pt`, `history.csv`, `config.json`, `completed.json`
 - `comparison.csv`: 완료된 seed별 비교 결과
 - `runtime.json`, `environment.txt`: GPU와 실행 환경
 - `execution_manifest.json`, `source_snapshot/`, `invocation.json`: 코드·설정·Git 커밋 기록
+- `params.resolved.yaml`, `invocations/`: CLI 덮어쓰기와 실행한 모델·seed까지 반영한 실제 설정 기록
 - 모델별 `.log`: 진행 상황과 오류
 
 이 폴더 전체를 원래 작업 컴퓨터나 별도 저장소로 복사한다. 모델 가중치·원본 영상은 Git에 올리지 않는다. 한 seed만 실행한 결과를 반복 실험 평균으로 표현하지 않는다.
@@ -102,6 +103,34 @@ git pull --ff-only
 
 패키지 목록이 바뀌면 새 목록을 설치하고 Jupyter 커널을 재시작한다. 이후 노트북을 다시 실행하면 최신 코드가 사용된다. 환경을 처음부터 매번 만들 필요는 없다.
 
-조건을 바꾼 실험은 설정 JSON을 새 파일로 복사하고 `experiment_id`를 새 값으로 지정한다. 노트북의 `CONFIG`를 그 파일로 바꾸거나 `--config experiments/새설정.json`을 사용한다. CLAHE와 ViT 마지막 블록 학습은 설정에서 지원하며, 다른 증강 등은 먼저 구현·점검한 뒤 사용한다. 본체를 학습할 때는 해당 실험에 맞게 학습률도 정한다.
+학습 중에는 설정을 수정하지 않는다. 실험이 끝나면 `params.yaml`에서 바꿀 값과 `experiment_id`를 수정하고, 노트북을 처음부터 다시 실행한다. 예를 들어 ViT만 더 작은 학습률로 학습하려면 다음과 같이 바꾼다. 나머지 값은 유지한다.
 
-코드·설정·실행 환경이 달라졌는데 같은 결과 폴더를 사용하면 실행을 거부한다. 기존 실험을 덮어쓰지 않도록 새 `experiment_id` 또는 별도의 `--output-root`를 사용한다. 최종 모델 평가와 README 결과 정리는 실험 완료 후 진행한다.
+```yaml
+experiment_id: vit_frozen_lr_1e4_v1
+models: [vit]
+lr: 0.0001
+```
+
+설정을 파일별로 보존하려면 `params.yaml`을 새 YAML 파일로 복사한다. 예시로 `experiments/vit_lr_example.yaml`이 포함돼 있다. 노트북 첫 셀의 `CONFIG`를 바꾸거나 다음 명령을 사용한다.
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.run_comparison --config experiments/vit_lr_example.yaml
+```
+
+| YAML 항목 | 바꿀 수 있는 내용 |
+|---|---|
+| `experiment_id` | 결과 폴더 이름. 학습 조건을 바꾸면 새 이름 사용 |
+| `models`, `seeds` | 실행할 모델과 난수 seed 목록 |
+| `epochs`, `batch_size`, `lr` | 학습 횟수, 배치 크기, 학습률 |
+| `optimizer`, `weight_decay` | `adam` 또는 `adamw`, 가중치 감쇠 |
+| `pos_weight` | `null`이면 일반 BCE, 양수이면 양성 클래스 손실 가중치 |
+| `clahe` | CLAHE 적용 여부 |
+| `vit_last_block` | ViT 마지막 블록·최종 LayerNorm 학습 여부 |
+| `selection_metric` | Best checkpoint 기준 `auprc` 또는 `auroc` |
+| `device`, `threads`, `output_root` | 실행 장치, CPU 스레드 수, 저장 위치 |
+
+`augmentation`은 아직 학습 실행기에 연결하지 않았으므로 `false`로 둔다. `true`를 지정하면 무시하지 않고 오류로 중단한다. 본체를 학습할 때는 해당 실험에 맞게 학습률도 정한다. JSON 설정 파일도 하위 호환으로 지원하지만 새 실험의 기본 설정은 YAML이다.
+
+seed나 실행할 모델 목록만 바꾸면 같은 학습 조건의 결과 폴더에 추가할 수 있다. 학습률 등 학습 조건이나 코드가 바뀌면 새 `experiment_id`를 사용한다. `invocations/`에는 실행할 때마다 실제 설정이 별도 파일로 남는다.
+
+학습 조건·학습 코드·실행 환경이 달라졌는데 같은 결과 폴더를 사용하면 실행을 거부한다. 기존 실험을 덮어쓰지 않도록 새 `experiment_id` 또는 별도의 `--output-root`를 사용한다. 최종 모델 평가와 README 결과 정리는 실험 완료 후 진행한다.

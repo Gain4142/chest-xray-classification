@@ -1,6 +1,6 @@
 # Chest X-ray Pneumonia Label Classification
 
-> **GPU 실행 안내:** Windows 11 / RTX 5080 Laptop GPU에서 저장소를 받아 실행하려면 [GPU 실행 가이드](docs/GPU_RUN.md)를 참고하세요. `setup_windows_rtx50.cmd` → `start_jupyter.cmd` → `notebooks/03_GPU_Comparison.ipynb` 순서입니다. 현재 비교 설정은 두 모델 각각 8에포크·seed 42·검증 AUPRC 기준 저장입니다. 아래의 기존 진행 기록과 최종 결과 설명은 실험 완료 후 정리합니다.
+> **GPU 실행 안내:** Windows 11 / RTX 5080 Laptop GPU에서 저장소를 받아 실행하려면 [GPU 실행 가이드](docs/GPU_RUN.md)를 참고하세요. `setup_windows_rtx50.cmd` → `start_jupyter.cmd` → `notebooks/03_GPU_Comparison.ipynb` 순서입니다. 하이퍼파라미터는 [params.yaml](params.yaml)에서 수정합니다. 기본 비교는 두 모델 각각 8에포크·seed 42·검증 AUPRC 기준 저장입니다. 아래의 기존 진행 기록과 최종 결과 설명은 실험 완료 후 정리합니다.
 
 A reproducible ChestX-ray14 project covering dataset inspection, patient-disjoint sampling, preprocessing experiments, and planned model evaluation.
 

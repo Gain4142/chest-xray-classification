@@ -66,6 +66,9 @@ def main():
     parser.add_argument('--epochs', type=int, default=8)
     parser.add_argument('--batch-size', type=int, default=8)
     parser.add_argument('--lr', type=float)
+    parser.add_argument('--optimizer', choices=('adam','adamw'), default='adam')
+    parser.add_argument('--weight-decay', type=float, default=0.0)
+    parser.add_argument('--pos-weight', type=float, help='Positive BCE class weight; omit for unweighted BCE')
     parser.add_argument('--threads', type=int, default=4)
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--selection-metric', choices=('auroc', 'auprc'), default='auroc',
@@ -91,6 +94,10 @@ def main():
         args.run_name = f'ViT_baseline_seed{args.seed}' if is_vit else f'B0_baseline_seed{args.seed}'
     if min(args.epochs, args.batch_size, args.threads) < 1 or not np.isfinite(args.lr) or args.lr <= 0:
         parser.error('Epochs, batch size, threads and learning rate must be positive')
+    if not np.isfinite(args.weight_decay) or args.weight_decay < 0:
+        parser.error('weight-decay must be finite and nonnegative')
+    if args.pos_weight is not None and (not np.isfinite(args.pos_weight) or args.pos_weight <= 0):
+        parser.error('pos-weight must be finite and positive')
     if Path(args.run_name).name != args.run_name or args.run_name in ('.', '..'):
         parser.error('Run name must be a single directory name')
     random.seed(args.seed)
@@ -147,6 +154,9 @@ def main():
         for key in critical:
             if previous['config'].get(key) != config.get(key):
                 parser.error(f'Cannot resume with a changed setting: {key}')
+        for key, default in {'optimizer':'adam', 'weight_decay':0.0, 'pos_weight':None}.items():
+            if previous['config'].get(key, default) != config[key]:
+                parser.error(f'Cannot resume with a changed setting: {key}')
         if previous['config'].get('selection_metric', 'auroc') != args.selection_metric:
             parser.error('Cannot change checkpoint selection while resuming')
         if previous['epoch'] > args.epochs:
@@ -160,8 +170,11 @@ def main():
     if not is_vit:
         model = build_model()
     model.to(device)
-    optimizer = torch.optim.Adam((p for p in model.parameters() if p.requires_grad), lr=args.lr)
-    criterion = nn.BCEWithLogitsLoss()
+    optimizer_class = torch.optim.AdamW if args.optimizer == 'adamw' else torch.optim.Adam
+    optimizer = optimizer_class((p for p in model.parameters() if p.requires_grad),
+                                lr=args.lr, weight_decay=args.weight_decay)
+    positive_weight = torch.tensor([args.pos_weight], device=device) if args.pos_weight is not None else None
+    criterion = nn.BCEWithLogitsLoss(pos_weight=positive_weight)
     history, best, start_epoch = [], -float('inf'), 1
     if previous is not None:
         model.load_state_dict(previous['model_state_dict'])

@@ -10,12 +10,17 @@ import sys
 from datetime import datetime
 from importlib.metadata import version
 from pathlib import Path
+import yaml
 
 from scripts.prepare_gpu_data import ROOT, prepare
+from src.experiment_config import validate_training
 
 
 def fingerprint(config):
-    return {'config':config, 'training_sources':{
+    # Selecting another seed/model does not change the shared training recipe.
+    recipe = {key:value for key,value in config.items()
+              if key not in ('models','seeds','planned_seeds','device','output_root')}
+    return {'config':recipe, 'training_sources':{
         path.name:hashlib.sha256(path.read_bytes()).hexdigest()
         for path in sorted((ROOT / 'src').glob('*.py'))}}
 
@@ -55,27 +60,28 @@ def summarize(config, output):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--config', type=Path, default=ROOT / 'experiments/baseline_comparison.json')
+    parser.add_argument('--config', type=Path, default=ROOT / 'params.yaml')
     parser.add_argument('--seeds', type=int, nargs='+')
     parser.add_argument('--models', choices=('densenet','vit'), nargs='+')
-    parser.add_argument('--device', choices=('cuda','cpu'), default='cuda')
-    parser.add_argument('--output-root', type=Path, default=ROOT / 'outputs/models')
+    parser.add_argument('--device', choices=('cuda','cpu'), help='Override YAML device')
+    parser.add_argument('--output-root', type=Path, help='Override YAML output_root')
     parser.add_argument('--smoke', action='store_true', help='32 train images, one epoch; never validation/test performance')
     args = parser.parse_args(argv)
     config = prepare(args.config.resolve())
-    if config.get('augmentation', False):
-        parser.error('This runner does not implement augmentation yet; use an explicitly implemented experiment.')
+    validate_training(config)
     seeds = args.seeds or config['seeds']
     models = args.models or config['models']
     if not seeds or len(set(seeds)) != len(seeds) or not models or len(set(models)) != len(models):
         parser.error('Seeds and models must be nonempty and unique')
+    validate_training({**config, 'seeds':seeds, 'models':models})
+    device = args.device or config['device']
     experiment_id = config['experiment_id']
     if Path(experiment_id).name != experiment_id or experiment_id in ('.','..'):
         parser.error('experiment_id must be a directory name')
     os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
     os.chdir(ROOT)
     import torch
-    if args.device == 'cuda':
+    if device == 'cuda':
         from scripts.check_gpu import check_gpu
         runtime = check_gpu()
     else:
@@ -83,8 +89,9 @@ def main(argv=None):
                    'torchvision':version('torchvision'), 'transformers':version('transformers'),
                    'numpy':version('numpy'), 'pandas':version('pandas'), 'sklearn':version('scikit-learn'),
                    'pillow':version('Pillow'), 'gpu':None}
-    runtime['device'] = args.device
-    output = args.output_root.resolve() / (experiment_id + ('_smoke' if args.smoke else ''))
+    runtime['device'] = device
+    output_root = (ROOT / (args.output_root or Path(config['output_root']))).resolve()
+    output = output_root / (experiment_id + ('_smoke' if args.smoke else ''))
     output.mkdir(parents=True, exist_ok=True)
     guard = fingerprint(config)
     guard['smoke'] = args.smoke
@@ -113,8 +120,16 @@ def main(argv=None):
         subprocess.run([sys.executable,'-m','pip','freeze'], stdout=env, check=True)
     epochs = 1 if args.smoke else config['epochs']
     run_config = {**config, 'epochs':epochs}
-    (output / 'invocation.json').write_text(json.dumps({'started_at':datetime.now().astimezone().isoformat(),
-        'git_commit':commit, 'seeds':seeds, 'models':models}, indent=2), encoding='utf-8')
+    effective = {**run_config, 'seeds':seeds, 'models':models, 'device':device,
+                 'output_root':str(output_root), 'smoke':args.smoke}
+    invocation = {'started_at':datetime.now().astimezone().isoformat(), 'git_commit':commit,
+                  'seeds':seeds, 'models':models, 'effective_config':effective}
+    (output / 'invocation.json').write_text(json.dumps(invocation, indent=2), encoding='utf-8')
+    invocation_dir = output / 'invocations'
+    invocation_dir.mkdir(exist_ok=True)
+    invocation_name = datetime.now().astimezone().strftime('%Y%m%dT%H%M%S_%f')
+    (invocation_dir / f'{invocation_name}.json').write_text(json.dumps(invocation, indent=2), encoding='utf-8')
+    (output / 'params.resolved.yaml').write_text(yaml.safe_dump(effective, sort_keys=False, allow_unicode=True), encoding='utf-8')
     for seed in seeds:
         for model in models:
             if {**fingerprint(config), 'smoke':args.smoke} != guard:
@@ -128,8 +143,11 @@ def main(argv=None):
             command = [sys.executable,'-u','-m','src.train','--model',model,
                        '--epochs',str(epochs),'--batch-size',str(config['batch_size']),
                        '--lr',str(config['lr']),'--threads',str(config['threads']), '--seed',str(seed),
-                       '--selection-metric',config['selection_metric'],'--device',args.device,
+                       '--optimizer',config['optimizer'],'--weight-decay',str(config['weight_decay']),
+                       '--selection-metric',config['selection_metric'],'--device',device,
                        '--run-name',run_name,'--output-root',str(output)]
+            if config['pos_weight'] is not None:
+                command += ['--pos-weight',str(config['pos_weight'])]
             if args.smoke:
                 command.append('--smoke')
             if config.get('clahe', False):

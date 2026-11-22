@@ -1,0 +1,21 @@
+# Change experiment_id for a new set of training conditions.
+experiment_id: baseline_frozen_8ep_ap_v2
+
+models: [densenet, vit]  # Or [vit] / [densenet]
+seeds: [42]
+epochs: 8
+batch_size: 8
+lr: 0.001
+optimizer: adam         # adam or adamw
+weight_decay: 0.0
+pos_weight: null        # null: ordinary BCE; a positive number weights positives
+
+clahe: false
+vit_last_block: false   # true: train the final ViT block and final LayerNorm too
+augmentation: false    # Leave false until augmentation is implemented in training
+selection_metric: auprc
+
+threads: 4
+device: cuda
+output_root: outputs/models
+data_config: experiments/data_split.json  # Fixed data; do not change for tuning
