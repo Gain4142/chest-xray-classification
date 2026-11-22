@@ -1,8 +1,10 @@
 # Chest X-ray Pneumonia Label Classification
 
+> **GPU 실행 안내:** Windows 11 / RTX 5080 Laptop GPU에서 저장소를 받아 실행하려면 [GPU 실행 가이드](docs/GPU_RUN.md)를 참고하세요. `setup_windows_rtx50.cmd` → `start_jupyter.cmd` → `notebooks/03_GPU_Comparison.ipynb` 순서입니다. 현재 비교 설정은 두 모델 각각 8에포크·seed 42·검증 AUPRC 기준 저장입니다. 아래의 기존 진행 기록과 최종 결과 설명은 실험 완료 후 정리합니다.
+
 A reproducible ChestX-ray14 project covering dataset inspection, patient-disjoint sampling, preprocessing experiments, and planned model evaluation.
 
-**Current status:** data preparation and initial exploratory analysis are complete for the selected cohort. A DenseNet-121 model definition and CPU timing check are available. Full model training, validation-based model selection, and final test evaluation have not started.
+**Current status:** data preparation and initial exploratory analysis are complete for the selected cohort. A DenseNet-121 model definition and CPU timing check are available. The first three-epoch baseline training run was launched on 2026-10-30 after a train-only execution check. The three-epoch run completed; best validation AUROC was 0.6849 and average precision was 0.02372 (epoch 3). Final test evaluation remains pending.
 
 ## Data and prediction target
 
@@ -56,7 +58,7 @@ The first baseline uses **RGB conversion, 224 x 224 bilinear resizing, tensor co
 
 | Planned experiment | Augmentation | CLAHE | Status |
 |---|---|---|---|
-| B0: baseline | Off | Off | Not trained |
+| B0: baseline | Off | Off | 3 epochs complete; val AUROC 0.6849 |
 | A1: augmentation comparison | On, train only | Off | Not trained |
 | C1: CLAHE comparison | Off | On, all cohorts | Not trained |
 
@@ -68,7 +70,19 @@ Prepared model: torchvision DenseNet-121 with ImageNet-1K pretrained weights, fr
 
 A train-only 32-image timing check (batch 8, four CPU threads) gives rough estimates of 6.7 minutes per training pass, 19.5 minutes for full validation inference, and 19.3 minutes for full test inference. These are extrapolations, not measured full-run durations or accuracy results. The transient timing model was discarded. [Timing details](docs/baseline_cpu_benchmark.md).
 
-Full training/evaluation entry points are not implemented yet; `src/train.py` and `src/evaluate.py` remain placeholders. ViT implementation, model comparisons, and Grad-CAM/error analysis are future work.
+The training entry point is implemented in `src/train.py`; see [baseline training](docs/baseline_training.md). A 32-image train-only execution check passed, including frozen-backbone checks and checkpoint reload. The first three-epoch B0 run completed on 2026-10-30 in 89.7 minutes. Best validation AUROC was 0.6849; average precision was 0.02372. [Learning curves](outputs/figures/training/B0_learning_curves.png) and [epoch records](outputs/metrics/training/B0_history.csv) are available. `src/evaluate.py` evaluates the selected ViT checkpoint on a fixed validation or test cohort and saves AUROC, average precision, and local per-image scores. ViT training is implemented and passed a 32-image execution check. Full ViT training, model comparisons, and Grad-CAM/error analysis are future work.
+
+## Vision Transformer setup
+
+The ViT uses the pretrained Hugging Face `google/vit-base-patch16-224` checkpoint and its image processor. The processor converts RGB inputs to normalized 224 x 224 tensors. A new one-logit head predicts the same binary label as the DenseNet model. Training uses BCEWithLogitsLoss and Adam. The default ViT setting updates the classifier only to match the DenseNet training scope. Adding `--vit-last-block` also trains the final encoder block and final LayerNorm and changes the default learning rate from 0.001 to 0.0001. Both settings use the same active train and validation manifests as DenseNet.
+
+Run the 32-image execution check with a fresh run name:
+
+```powershell
+.\.venv\Scripts\python.exe -m src.train --model vit --vit-last-block --smoke --epochs 1 --batch-size 4 --run-name ViT_smoke
+```
+
+The check uses only training images for both passes. Its metrics measure execution on that sample. The first check confirmed that the intended layers updated, frozen parameters stayed fixed, and reloading the checkpoint reproduced the same logits. A full run uses the complete training and validation manifests and selects the best checkpoint by validation AUROC.
 
 ## Reproduction
 
@@ -125,7 +139,8 @@ Historical CPU-pilot manifests and scripts are retained for provenance; their re
 
 - Completed: environment setup, dataset selection, EDA, selected-file integrity checks, exact-pixel deduplication, active patient-disjoint manifests, preprocessing/augmentation implementation and sample review.
 - Prepared: first model definition and train-only CPU timing.
-- Pending: first complete training run, validation-based experiment comparison, final test metrics, patient-level uncertainty estimates, subgroup/error analysis and interpretability.
+- Completed: first three-epoch frozen-backbone DenseNet baseline training and learning-curve review.
+- Pending: validation-based experiment comparison, final test metrics, patient-level uncertainty estimates, subgroup/error analysis and interpretability.
 - Not established: clinical label correctness, external validity, near-duplicate absence, preprocessing benefit or model performance.
 
 Planned evaluation includes AUROC, AUPRC and threshold-based sensitivity/specificity, with uncertainty assessed at patient level. Internal split performance alone will not establish clinical applicability.

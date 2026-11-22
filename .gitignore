@@ -250,3 +250,15 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+# Large Colab transfer bundles
+outputs/colab/*.zip
+# Local transfer bundles, execution snapshots, machine-specific administration
+*.zip
+outputs/archive/
+outputs/transfer/
+outputs/colab/*.jpg
+outputs/colab/completion_and_shutdown.md
+outputs/metrics/artifact_cleanup_*.json
+outputs/metrics/experiment_inventory.json
+outputs/metrics/baseline_comparison/
+setup_gpu.log

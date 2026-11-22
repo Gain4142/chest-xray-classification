@@ -1,0 +1,5 @@
+# Fixed cohort hashes must survive checkout on Windows and Linux unchanged.
+experiments/splits/*.csv -text whitespace=cr-at-eol
+*.cmd text eol=crlf
+*.py text eol=lf
+*.ipynb text eol=lf

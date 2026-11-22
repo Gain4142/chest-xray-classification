@@ -1,0 +1,39 @@
+{
+  "experiment_id": "baseline_frozen_8ep_ap_v1",
+  "models": [
+    "densenet",
+    "vit"
+  ],
+  "epochs": 8,
+  "batch_size": 8,
+  "lr": 0.001,
+  "threads": 4,
+  "seeds": [
+    42
+  ],
+  "planned_seeds": [
+    42,
+    123,
+    2026
+  ],
+  "selection_metric": "auprc",
+  "clahe": false,
+  "vit_last_block": false,
+  "augmentation": false,
+  "data": {
+    "train": {
+      "path": "data/processed/reduced_train_full_eval_qc/train.csv",
+      "sha256": "f4020ca425c70190afc548345f2de6804165a9553cae494ff5aaa15c05f147fe",
+      "images": 4076,
+      "positive_images": 1019,
+      "source": "experiments/splits/train.csv"
+    },
+    "val": {
+      "path": "data/processed/reduced_train_full_eval_qc/val.csv",
+      "sha256": "cb6e843d9fc5abdf6591f342a4db7ae952c13786bca04e192a5a43b77c0552d2",
+      "images": 16872,
+      "positive_images": 218,
+      "source": "experiments/splits/val.csv"
+    }
+  }
+}

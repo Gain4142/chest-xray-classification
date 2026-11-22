@@ -1,0 +1,13 @@
+{
+  "model": "google/vit-base-patch16-224",
+  "checkpoint_epoch": 3,
+  "checkpoint_sha256": "0517f730ba88774f2c232ef61d0b195789e40e72ba26fc2e537a6c0e4cb8b43f",
+  "threshold": 0.0968017429113388,
+  "cohort": "test",
+  "selection": "seed 42, 2 per TP/TN/FP/FN, 8 distinct patients; qualitative examples",
+  "layer": "vit.encoder.layer[-1].layernorm_before",
+  "target": "positive logit for all groups",
+  "method": "drop CLS token; spatial mean gradient per channel; weighted activations; ReLU; 14x14 to 224x224 bilinear",
+  "normalization": "per image maximum; zero maps retained",
+  "checks": "logits match no-grad forward; scores match saved test within 1e-5; nonzero patch gradients; finite maps"
+}

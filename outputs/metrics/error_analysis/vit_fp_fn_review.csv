@@ -1,0 +1,5 @@
+Image Index,Patient ID,pneumonia,score,prediction,group,recomputed_score,cam_max_before_normalization,View Position,Finding Labels,visual_observation,review_scope
+00012010_037.png,12010,0,0.17429910600185394,1,FP,0.17429910600185394,0.00877169519662857,AP,No Finding,여러 선 모양 기구가 보임. 흉부 내부와 영상 주변 모두 강조됨.,224-pixel overlay review; clinical lesion correspondence and original-resolution image quality unverified
+00005850_003.png,5850,0,0.24173475801944733,1,FP,0.24173475801944733,0.008699574507772923,AP,No Finding,측면 문자 표식이 보임. 상단 경계·목·어깨 주변과 흉부 내부가 강조됨.,224-pixel overlay review; clinical lesion correspondence and original-resolution image quality unverified
+00021216_005.png,21216,1,0.07237669080495834,0,FN,0.07237669080495834,0.01202996913343668,PA,Consolidation|Pneumonia,강조가 주로 횡격막 주변과 상복부 쪽에 분포함.,224-pixel overlay review; clinical lesion correspondence and original-resolution image quality unverified
+00025769_024.png,25769,1,0.08358681201934814,0,FN,0.08358681201934814,0.01158543024212122,PA,Effusion|Pneumonia,강한 강조가 영상 상단 경계와 목·어깨 주변에 분포함.,224-pixel overlay review; clinical lesion correspondence and original-resolution image quality unverified

@@ -1,0 +1,11 @@
+{
+  "split": "val",
+  "checkpoint_epoch": 10,
+  "manifest_sha256": "cb6e843d9fc5abdf6591f342a4db7ae952c13786bca04e192a5a43b77c0552d2",
+  "images": 16872,
+  "patients": 4621,
+  "positive_images": 218,
+  "auroc": 0.7202776862709238,
+  "average_precision": 0.030738824477493664,
+  "seconds": 651.9559515600013
+}

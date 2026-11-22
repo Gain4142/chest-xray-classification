@@ -1,0 +1,27 @@
+{
+  "status": "VERIFIED",
+  "checks": [
+    {
+      "model": "Baseline",
+      "epochs": 10,
+      "best_epoch": 10,
+      "val_auroc": 0.7202776862709238,
+      "val_average_precision": 0.030738824477493664,
+      "training_and_validation_minutes": 133.7785114980333,
+      "best_checkpoint_bytes": 343288536,
+      "last_checkpoint_bytes": 343288536
+    },
+    {
+      "model": "CLAHE",
+      "epochs": 10,
+      "best_epoch": 10,
+      "val_auroc": 0.7318937621950481,
+      "val_average_precision": 0.033080270092143725,
+      "training_and_validation_minutes": 161.66022520706665,
+      "best_checkpoint_bytes": 343288600,
+      "last_checkpoint_bytes": 343288600
+    }
+  ],
+  "checkpoint_location": "Drive CXR_CLAHE/results/<run>/best.pt and last.pt",
+  "weights_in_archive": false
+}

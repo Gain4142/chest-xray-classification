@@ -1,0 +1,35 @@
+{
+  "model": "vit",
+  "run_name": "ViT_GPU_CLAHE_seed42_10epochs",
+  "vit_last_block": false,
+  "epochs": 10,
+  "batch_size": 8,
+  "lr": 0.001,
+  "threads": 4,
+  "seed": 42,
+  "smoke": false,
+  "output_root": "/content/drive/MyDrive/CXR_CLAHE/results",
+  "clahe": true,
+  "device": "cuda",
+  "manifest_sha256": {
+    "train": "f4020ca425c70190afc548345f2de6804165a9553cae494ff5aaa15c05f147fe",
+    "val": "cb6e843d9fc5abdf6591f342a4db7ae952c13786bca04e192a5a43b77c0552d2"
+  },
+  "augmentation": false,
+  "clahe_parameters": {
+    "clip_limit": 2.0,
+    "tile_grid_size": [
+      8,
+      8
+    ]
+  },
+  "selection": "validation AUROC, earliest epoch on ties",
+  "torch_version": "2.14.1+cu130",
+  "train_images": 4076,
+  "val_images": 16872,
+  "smoke_metrics_are_not_validation": false,
+  "pretrained_model": "google/vit-base-patch16-224",
+  "revision": "3f49326eb077187dfe1c2a2bb15fbd74e6ab91e3",
+  "resumed_from": "/content/drive/MyDrive/CXR_CLAHE/results/ViT_GPU_CLAHE_seed42",
+  "continuation_start_epoch": 4
+}
