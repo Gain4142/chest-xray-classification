@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import os
 import time
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from src.dataset import ChestXrayDataset
 from src.preprocessing import ApplyCLAHE
 from src.train import ROOT
 from src.vit_model import ViTBinaryClassifier
+from src.vit_model import load_vit, ViTInputTransform
 
 
 def main():
@@ -26,6 +28,11 @@ def main():
     if args.device == 'cuda' and not torch.cuda.is_available():
         parser.error('CUDA GPU unavailable')
     device = torch.device(args.device)
+    os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
+    if args.device == 'cuda':
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+    torch.use_deterministic_algorithms(True)
     run = args.run_dir
     if not (run / 'completed.json').is_file():
         parser.error('Choose a completed training run.')
@@ -47,21 +54,13 @@ def main():
             raise ValueError(f'{split} manifest differs from the training run.')
 
     processor = ViTImageProcessor.from_pretrained(run, local_files_only=True)
-    model_config = ViTConfig.from_pretrained(
-        config['pretrained_model'], revision=config['revision'],
-        cache_dir=ROOT / 'outputs/models/hf_cache', local_files_only=True,
-        num_labels=1,
-    )
-    model = ViTBinaryClassifier(ViTForImageClassification(model_config), False)
+    model, _ = load_vit(ROOT / 'outputs/models/hf_cache',
+                        config.get('vit_last_block', False), config.get('vit_training'))
     model.load_state_dict(checkpoint['model_state_dict'])
     model.to(device)
     model.eval()
 
-    clahe = ApplyCLAHE()
-    def transform(image):
-        if config.get("clahe", False):
-            image = clahe(image)
-        return processor(image.convert('RGB'), return_tensors='pt')['pixel_values'][0]
+    transform = ViTInputTransform(processor, config.get('clahe', False))
 
     cohort = ChestXrayDataset(cohort_path, ROOT / 'data/raw/images', transform)
     for split in ('train', 'val'):
@@ -74,7 +73,7 @@ def main():
     scores = []
     started = time.perf_counter()
     print(f'Evaluating {len(cohort)} {args.split} images, checkpoint epoch {checkpoint["epoch"]}', flush=True)
-    with torch.inference_mode():
+    with torch.set_grad_enabled(False):
         for batch, (images, _) in enumerate(loader, 1):
             logits = model(images.to(device)).squeeze(1)
             if not torch.isfinite(logits).all():

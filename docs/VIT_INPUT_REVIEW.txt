@@ -1,0 +1,7 @@
+현재 ViT 입력 재점검
+학습 목록에서 라벨 0/1 각 4장 선정, 원본/CLAHE 전후 실제 DataLoader 입력 시각화.
+batch=(8,3,224,224), 라벨-학습목록 대응, 유한 값, 호출자의 CPU torch 난수 상태 보존을 검사했다.
+로컬에서 직접 실행·이미지 확인 완료. 친구 GPU 환경 확인은 아직 남음.
+0은 Pneumonia 라벨 없음이며 의학적 정상 확진을 의미하지 않는다.
+8장은 전체 라벨의 의학적 정확성을 검증하는 표본이 아니다.
+근거: outputs/figures/vit_input_review/batch.png 및 checks.json

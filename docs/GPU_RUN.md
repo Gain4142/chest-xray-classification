@@ -111,11 +111,7 @@ models: [vit]
 lr: 0.0001
 ```
 
-설정을 파일별로 보존하려면 `params.yaml`을 새 YAML 파일로 복사한다. 예시로 `experiments/vit_lr_example.yaml`이 포함돼 있다. 노트북 첫 셀의 `CONFIG`를 바꾸거나 다음 명령을 사용한다.
-
-```powershell
-.\.venv\Scripts\python.exe -m scripts.run_comparison --config experiments/vit_lr_example.yaml
-```
+모든 새 실험은 저장소 최상위 `params.yaml` 하나에서 설정한다. 노트북의 `CONFIG` 경로는 바꾸지 않는다. 실행 당시 설정은 결과 폴더의 `params.resolved.yaml`과 `invocations/`에 자동 보관된다. 기존 실험별 YAML은 과거 기록으로 유지하며 새 실행 입력으로 사용하지 않는다.
 
 | YAML 항목 | 바꿀 수 있는 내용 |
 |---|---|
@@ -134,3 +130,19 @@ lr: 0.0001
 seed나 실행할 모델 목록만 바꾸면 같은 학습 조건의 결과 폴더에 추가할 수 있다. 학습률 등 학습 조건이나 코드가 바뀌면 새 `experiment_id`를 사용한다. `invocations/`에는 실행할 때마다 실제 설정이 별도 파일로 남는다.
 
 학습 조건·학습 코드·실행 환경이 달라졌는데 같은 결과 폴더를 사용하면 실행을 거부한다. 기존 실험을 덮어쓰지 않도록 새 `experiment_id` 또는 별도의 `--output-root`를 사용한다. 최종 모델 평가와 README 결과 정리는 실험 완료 후 진행한다.
+
+## 추가 ViT 실험 설정
+
+설정 입력은 params.yaml 하나다. vit_training은 frozen / last_block / llrd, scheduler는 constant / warmup_cosine이다. warmup_ratio=0.1은 전체 optimizer 업데이트의 10%를 뜻하며 검증 배치는 제외한다. LLRD는 embeddings부터 마지막 블록까지 모두 학습하며 층별 최대 학습률에 llrd_decay=0.75를 적용한다. Adam, weight_decay=0을 유지하므로 강의의 AdamW+weight decay 레시피 전체를 복제한 실험은 아니다.
+
+추가 조건(각 seeds=[42,123,2026], 8ep, batch8, CLAHE/증강 off, BCE):
+- vit_frozen_warmcos_8ep_ap_v1: frozen, lr=0.001, warmup_cosine
+- vit_lastblock_warmcos_8ep_ap_v1: last_block, lr=0.00003, warmup_cosine
+- vit_llrd_constant_8ep_ap_v1: llrd, lr=0.00003, constant
+- vit_llrd_warmcos_8ep_ap_v1: llrd, lr=0.00003, warmup_cosine
+
+각 조건을 실행할 때 params.yaml만 수정한다. 소량 점검은 별도 실행 결과이며 전체 GPU 본 학습으로 간주하지 않는다. parameter_groups.json은 학습 대상 이름과 층별 최대 LR, history.csv는 에포크 시작/다음 업데이트 LR을 기록한다. scheduler는 optimizer.step 다음 매 학습 배치마다 전진하며 scheduler 상태를 체크포인트에 함께 저장한다. scheduled 실행의 epochs를 바꾸어 재개하면 원래 학습률 곡선이 달라지므로 거부한다.
+
+실행 전 커널을 재시작하고 실제 입력 배치 셀을 확인한다. 동일한 8개 학습 영상에서 원본/CLAHE 전후를 표시하며 라벨 매칭과 난수 상태 보존을 검사한다. 라벨 0은 정상 확진이 아니라 Pneumonia 라벨 없음이다. 친구 GPU에서 새 코드의 각 학습 범위·scheduler 조합 소량 점검은 별도로 필요하다.
+
+기존 실행의 소스 지문이 달라지므로 기존 실험 ID로 새 학습을 시작/재개하지 않는다. 기존 Best 평가와 결과 기록은 보존한다. 추가 실험이 끝날 때까지 테스트 결과를 모델·설정 선택에 사용하지 않는다.

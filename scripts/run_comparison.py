@@ -146,6 +146,11 @@ def main(argv=None):
                        '--optimizer',config['optimizer'],'--weight-decay',str(config['weight_decay']),
                        '--selection-metric',config['selection_metric'],'--device',device,
                        '--run-name',run_name,'--output-root',str(output)]
+            command += ['--scheduler', config['scheduler'],
+                        '--warmup-ratio',str(config['warmup_ratio']),
+                        '--llrd-decay',str(config['llrd_decay'])]
+            if model == 'vit':
+                command += ['--vit-training',config['vit_training']]
             if config['pos_weight'] is not None:
                 command += ['--pos-weight',str(config['pos_weight'])]
             if args.smoke:

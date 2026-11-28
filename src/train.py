@@ -16,11 +16,12 @@ from torch.utils.data import DataLoader, Subset
 from src.dataset import ChestXrayDataset
 from src.model import build_model, set_classifier_training
 from src.preprocessing import ApplyCLAHE, build_transform
+from src.optimization import parameter_groups, build_scheduler, group_report
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def run_epoch(model, loader, criterion, optimizer=None, set_training=set_classifier_training):
+def run_epoch(model, loader, criterion, optimizer=None, set_training=set_classifier_training, scheduler=None):
     if optimizer is None:
         model.eval()
     else:
@@ -39,6 +40,8 @@ def run_epoch(model, loader, criterion, optimizer=None, set_training=set_classif
             if optimizer is not None:
                 loss.backward()
                 optimizer.step()
+                if scheduler is not None:
+                    scheduler.step()
             loss_sum += loss.item() * len(targets)
             targets_all.extend(targets.detach().cpu().tolist())
             scores_all.extend(logits.detach().sigmoid().cpu().tolist())
@@ -63,6 +66,10 @@ def main():
     parser.add_argument('--model', choices=('densenet', 'vit'), default='densenet')
     parser.add_argument('--run-name')
     parser.add_argument('--vit-last-block', action='store_true', help='Fine-tune the last ViT block and final LayerNorm')
+    parser.add_argument('--vit-training', choices=('frozen','last_block','llrd'))
+    parser.add_argument('--scheduler', choices=('constant','warmup_cosine'), default='constant')
+    parser.add_argument('--warmup-ratio', type=float, default=0.1)
+    parser.add_argument('--llrd-decay', type=float, default=0.75)
     parser.add_argument('--epochs', type=int, default=8)
     parser.add_argument('--batch-size', type=int, default=8)
     parser.add_argument('--lr', type=float)
@@ -86,6 +93,15 @@ def main():
         torch.backends.cuda.matmul.allow_tf32 = False
         torch.backends.cudnn.allow_tf32 = False
     is_vit = args.model == 'vit'
+    scope = args.vit_training or ('last_block' if args.vit_last_block else 'frozen')
+    if args.vit_last_block and scope != 'last_block':
+        parser.error('Conflicting ViT training scope flags')
+    if scope != 'frozen' and not is_vit:
+        parser.error('Non-frozen scope requires ViT')
+    args.vit_training = scope
+    args.vit_last_block = scope == 'last_block'
+    if not 0 < args.warmup_ratio < 1 or not 0 < args.llrd_decay < 1:
+        parser.error('warmup-ratio and llrd-decay must be in (0,1)')
     if args.vit_last_block and not is_vit:
         parser.error('--vit-last-block requires --model vit')
     if args.lr is None:
@@ -109,15 +125,10 @@ def main():
     set_training = set_classifier_training
     model_config = {}
     if is_vit:
-        from src.vit_model import MODEL_ID, MODEL_REVISION, load_vit
+        from src.vit_model import MODEL_ID, MODEL_REVISION, load_vit, ViTInputTransform
 
-        model, processor = load_vit(ROOT / 'outputs/models/hf_cache', args.vit_last_block)
-
-        clahe = ApplyCLAHE()
-        def transform(image):
-            if args.clahe:
-                image = clahe(image)
-            return processor(image.convert('RGB'), return_tensors='pt')['pixel_values'][0]
+        model, processor = load_vit(ROOT / 'outputs/models/hf_cache', training_scope=scope)
+        transform = ViTInputTransform(processor, args.clahe)
 
         set_training = type(model).train_selected_layers
         model_config = dict(pretrained_model=MODEL_ID, revision=MODEL_REVISION)
@@ -154,9 +165,16 @@ def main():
         for key in critical:
             if previous['config'].get(key) != config.get(key):
                 parser.error(f'Cannot resume with a changed setting: {key}')
-        for key, default in {'optimizer':'adam', 'weight_decay':0.0, 'pos_weight':None}.items():
+        for key, default in {'optimizer':'adam', 'weight_decay':0.0, 'pos_weight':None,
+                             'scheduler':'constant','warmup_ratio':0.1,'llrd_decay':0.75}.items():
             if previous['config'].get(key, default) != config[key]:
                 parser.error(f'Cannot resume with a changed setting: {key}')
+        previous_scope = previous['config'].get('vit_training',
+                         'last_block' if previous['config'].get('vit_last_block') else 'frozen')
+        if previous_scope != scope:
+            parser.error('Cannot change ViT training scope while resuming')
+        if args.scheduler != 'constant' and previous['config']['epochs'] != args.epochs:
+            parser.error('Cannot change total epochs of a scheduled run; its LR trajectory is fixed')
         if previous['config'].get('selection_metric', 'auroc') != args.selection_metric:
             parser.error('Cannot change checkpoint selection while resuming')
         if previous['epoch'] > args.epochs:
@@ -171,14 +189,23 @@ def main():
         model = build_model()
     model.to(device)
     optimizer_class = torch.optim.AdamW if args.optimizer == 'adamw' else torch.optim.Adam
-    optimizer = optimizer_class((p for p in model.parameters() if p.requires_grad),
+    optimizer = optimizer_class(parameter_groups(model, args.lr, args.weight_decay, args.llrd_decay),
                                 lr=args.lr, weight_decay=args.weight_decay)
+    groups = group_report(model, optimizer)
+    (output / 'parameter_groups.json').write_text(json.dumps(groups, indent=2), encoding='utf-8')
+    print('Training scope:', scope, 'Trainable parameters:', sum(g['parameters'] for g in groups), flush=True)
+    print('Peak learning rates:', {g['name']:g['peak_lr'] for g in groups}, flush=True)
+    scheduler = build_scheduler(optimizer, args.scheduler, args.epochs * len(train_loader), args.warmup_ratio)
     positive_weight = torch.tensor([args.pos_weight], device=device) if args.pos_weight is not None else None
     criterion = nn.BCEWithLogitsLoss(pos_weight=positive_weight)
     history, best, start_epoch = [], -float('inf'), 1
     if previous is not None:
         model.load_state_dict(previous['model_state_dict'])
         optimizer.load_state_dict(previous['optimizer_state_dict'])
+        if scheduler is not None:
+            if 'scheduler_state_dict' not in previous:
+                parser.error('Scheduled checkpoint is missing scheduler state')
+            scheduler.load_state_dict(previous['scheduler_state_dict'])
         generator.set_state(previous['loader_rng_state'])
         torch.set_rng_state(previous['torch_rng_state'])
         if device.type == 'cuda' and 'cuda_rng_states' in previous:
@@ -205,17 +232,24 @@ def main():
         trainable_names = {name for name, p in model.named_parameters() if p.requires_grad}
         frozen = {name: value.clone() for name, value in model.state_dict().items()
                   if name not in trainable_names}
-        if args.vit_last_block:
+        if scope in ('last_block', 'llrd'):
             block_parameter = model.network.vit.encoder.layer[-1].output.dense.weight
             block_before = block_parameter.detach().clone()
+        if scope == 'llrd':
+            embedding_parameter = model.network.vit.embeddings.patch_embeddings.projection.weight
+            embedding_before = embedding_parameter.detach().clone()
     classifier_before = model.classifier.weight.detach().clone()
     for epoch in range(start_epoch, args.epochs + 1):
         started = time.perf_counter()
         print(f'Epoch {epoch}/{args.epochs}: training {len(train)} images', flush=True)
-        training = run_epoch(model, train_loader, criterion, optimizer, set_training)
+        lr_start = [g['lr'] for g in optimizer.param_groups]
+        training = run_epoch(model, train_loader, criterion, optimizer, set_training, scheduler)
         print(f'Epoch {epoch}: evaluating {len(val)} images', flush=True)
         validation = run_epoch(model, val_loader, criterion)
         row = {'epoch': epoch, 'seconds': time.perf_counter() - started,
+               'lr_start_min': min(lr_start), 'lr_start_max': max(lr_start),
+               'lr_next_min': min(g['lr'] for g in optimizer.param_groups),
+               'lr_next_max': max(g['lr'] for g in optimizer.param_groups),
                **{f'train_{k}': v for k, v in training.items()},
                **{f'val_{k}': v for k, v in validation.items()}}
         history.append(row)
@@ -223,6 +257,8 @@ def main():
         checkpoint = {'model_state_dict': model.state_dict(), 'optimizer_state_dict': optimizer.state_dict(),
                       'epoch': epoch, 'config': config, 'metrics': row,
                       'torch_rng_state': torch.get_rng_state(), 'loader_rng_state': generator.get_state()}
+        if scheduler is not None:
+            checkpoint['scheduler_state_dict'] = scheduler.state_dict()
         if device.type == 'cuda':
             checkpoint['cuda_rng_states'] = torch.cuda.get_rng_state_all()
         save_checkpoint(output / 'last.pt', checkpoint)
@@ -233,15 +269,17 @@ def main():
     if args.smoke and start_epoch <= args.epochs:
         state = model.state_dict()
         assert all(torch.equal(value, state[key]) for key, value in frozen.items())
-        if args.vit_last_block:
+        if scope in ('last_block', 'llrd'):
             assert not torch.equal(block_before, block_parameter)
+        if scope == 'llrd':
+            assert not torch.equal(embedding_before, embedding_parameter)
         del frozen, state
         assert not torch.equal(classifier_before, model.classifier.weight)
         if is_vit:
             from src.vit_model import ViTBinaryClassifier, ViTForImageClassification
 
             restored = ViTBinaryClassifier(
-                ViTForImageClassification(model.network.config), args.vit_last_block
+                ViTForImageClassification(model.network.config), training_scope=scope
             )
         else:
             restored = build_model(pretrained=False)

@@ -7,9 +7,10 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULTS = {'optimizer':'adam', 'weight_decay':0.0, 'pos_weight':None,
-            'device':'cuda', 'output_root':'outputs/models'}
+            'device':'cuda', 'output_root':'outputs/models',
+            'scheduler':'constant', 'warmup_ratio':0.1, 'llrd_decay':0.75}
 KEYS = {'experiment_id','models','epochs','batch_size','lr','threads','seeds','planned_seeds',
-        'selection_metric','clahe','vit_last_block','augmentation','data','data_config', *DEFAULTS}
+        'selection_metric','clahe','vit_last_block','vit_training','augmentation','data','data_config', *DEFAULTS}
 
 
 class UniqueLoader(yaml.SafeLoader):
@@ -77,6 +78,27 @@ def validate_training(config):
             raise ValueError(f'{key} must be true or false')
     if config.get('augmentation', False):
         raise ValueError('Training augmentation is not implemented in this runner yet')
+    scope = config.get('vit_training', 'last_block' if config.get('vit_last_block', False) else 'frozen')
+    if scope not in ('frozen', 'last_block', 'llrd'):
+        raise ValueError('vit_training must be frozen, last_block or llrd')
+    if config.get('vit_last_block', False) and scope != 'last_block':
+        raise ValueError('Conflicting vit_training and legacy vit_last_block')
+    config['vit_training'] = scope
+    if scope != 'frozen' and config['models'] != ['vit']:
+        raise ValueError('Non-frozen vit_training requires models: [vit]')
+    if config['scheduler'] not in ('constant', 'warmup_cosine'):
+        raise ValueError('scheduler must be constant or warmup_cosine')
+    for key, upper in (('warmup_ratio', 1), ('llrd_decay', 1)):
+        value = config[key]
+        if isinstance(value, bool):
+            raise ValueError(f'Invalid {key}')
+        try:
+            value = float(value)
+        except (TypeError, ValueError):
+            raise ValueError(f'Invalid {key}') from None
+        if not math.isfinite(value) or not 0 < value < upper:
+            raise ValueError(f'{key} must be strictly between 0 and 1')
+        config[key] = value
     if config['optimizer'] not in ('adam','adamw'):
         raise ValueError('optimizer must be adam or adamw')
     if config['selection_metric'] not in ('auroc','auprc'):
